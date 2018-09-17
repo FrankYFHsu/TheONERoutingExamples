@@ -6,6 +6,7 @@
 package routing;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -91,6 +92,33 @@ public class FrequencySprayAndWaitRouter extends ActiveRouter {
 		msg.addProperty(MSG_COUNT_PROPERTY, new Integer(initialNrofCopies));
 		addToMessages(msg, true);
 		return true;
+	}
+
+	@Override
+	protected Message getNextMessageToRemove(boolean excludeMsgBeingSent) {
+
+		Collection<Message> messages = this.getMessageCollection();
+		Message lowestContactFreqMessage = null;
+		for (Message m : messages) {
+
+			if (excludeMsgBeingSent && isSending(m.getId())) {
+				continue; // skip the message(s) that router is sending
+			}
+
+			if (lowestContactFreqMessage == null) {
+				lowestContactFreqMessage = m;
+			} else {
+				double frequency = frequencyRecord.getFrequency(m.getTo().getAddress(), SimClock.getTime());
+				double lowest_frequency = frequencyRecord.getFrequency(lowestContactFreqMessage.getTo().getAddress(),
+						SimClock.getTime());
+				if (frequency < lowest_frequency) {
+					lowestContactFreqMessage = m;
+				}
+
+			}
+		}
+
+		return lowestContactFreqMessage;
 	}
 
 	@Override
