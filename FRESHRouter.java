@@ -6,6 +6,7 @@
 package routing;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -162,6 +163,39 @@ public class FRESHRouter extends ActiveRouter {
 			return null;
 		}
 
+	}
+
+	@Override
+	protected Message getNextMessageToRemove(boolean excludeMsgBeingSent) {
+		/*
+		 * Remove the message which has the largest encounter age with the message
+		 * destination. This dropping policy can be further improved. For example, if a
+		 * node generates a message destined to a node that it never encountered, this
+		 * message may be dropped immediately. In this example, we just drop the message
+		 * with the largest encounter age simply.
+		 */
+		Collection<Message> messages = this.getMessageCollection();
+		Message largestEncounterAgeMessage = null;
+		for (Message m : messages) {
+
+			if (excludeMsgBeingSent && isSending(m.getId())) {
+				continue; // skip the message(s) that router is sending
+			}
+
+			if (largestEncounterAgeMessage == null) {
+				largestEncounterAgeMessage = m;
+			} else {
+				double age = this.getEncounterAge(m.getTo().getAddress());
+				double largestAge = this.getEncounterAge(largestEncounterAgeMessage.getTo().getAddress());
+
+				if (largestAge < age) {
+					largestEncounterAgeMessage = m;
+				}
+
+			}
+		}
+
+		return largestEncounterAgeMessage;
 	}
 
 	@Override
