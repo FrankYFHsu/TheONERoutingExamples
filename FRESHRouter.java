@@ -9,8 +9,10 @@ import java.util.HashMap;
 
 import core.Connection;
 import core.DTNHost;
+import core.Message;
 import core.Settings;
 import core.SimClock;
+import util.Tuple;
 
 /**
  * FRESH: FResher Encounter SearcH Routing scheme
@@ -98,6 +100,34 @@ public class FRESHRouter extends ActiveRouter {
 	@Override
 	public FRESHRouter replicate() {
 		return new FRESHRouter(this);
+	}
+
+	/**
+	 * The class storing Tuple<Message, Connection> with encounter age for
+	 * transmission scheduling.
+	 *
+	 */
+	private class MessageTupleForSortByEncounterAge {
+
+		private Tuple<Message, Connection> tuples;
+		private double encounterAge;
+
+		public Tuple<Message, Connection> getTuples() {
+			return tuples;
+		}
+
+		public void setTuples(Tuple<Message, Connection> tuples) {
+			this.tuples = tuples;
+		}
+
+		public double getEncounterAge() {
+			return encounterAge;
+		}
+
+		public void setEncounterAge(double encounterAge) {
+			this.encounterAge = encounterAge;
+		}
+
 	}
 
 }
