@@ -6,6 +6,7 @@
 package routing;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -115,14 +116,71 @@ public class FrequencySprayAndWaitRouter extends ActiveRouter {
 			return;
 		}
 
-		/* create a list of SAWMessages that have copies left to distribute */
-		@SuppressWarnings(value = "unchecked")
-		List<Message> copiesLeft = sortByQueueMode(getMessagesWithCopiesLeft());
+		tryOtherMessages();
+	}
 
-		if (copiesLeft.size() > 0) {
-			/* try to send those messages */
-			this.tryMessagesToConnections(copiesLeft, getConnections());
+	/**
+	 * Tries to send all other messages to all connected hosts ordered by their
+	 * contact frequency with the destination
+	 * 
+	 * @return The return value of {@link #tryMessagesForConnected(List)}
+	 */
+	private Tuple<Message, Connection> tryOtherMessages() {
+
+		List<MessageTupleForSortByFrequency> messagesToBeReplicate = new ArrayList<MessageTupleForSortByFrequency>();
+
+		/* create a list of SAWMessages that have copies left to distribute */
+		List<Message> msgCollection = getMessagesWithCopiesLeft();
+
+		for (Connection con : getConnections()) {
+			DTNHost other = con.getOtherNode(getHost());
+			FrequencySprayAndWaitRouter othRouter = (FrequencySprayAndWaitRouter) other.getRouter();
+
+			if (othRouter.isTransferring()) {
+				continue; // skip hosts that are transferring
+			}
+
+			for (Message m : msgCollection) {
+				if (othRouter.hasMessage(m.getId())) {
+					continue; // skip messages that the other one has
+				}
+
+				DTNHost destiantion = m.getTo();
+
+				double myFrequencyToDestination = frequencyRecord.getFrequency(destiantion.getAddress(),
+						SimClock.getTime());
+				double yourFrequencyToDestination = othRouter.frequencyRecord.getFrequency(destiantion.getAddress(),
+						SimClock.getTime());
+
+				if (yourFrequencyToDestination > myFrequencyToDestination) {
+
+					MessageTupleForSortByFrequency messageTuples = new MessageTupleForSortByFrequency();
+					messageTuples.setTuples(new Tuple<Message, Connection>(m, con));
+					messageTuples.setFrequency(yourFrequencyToDestination);
+					messagesToBeReplicate.add(messageTuples);
+				}
+			}
+
 		}
+
+		List<Tuple<Message, Connection>> messages = new ArrayList<Tuple<Message, Connection>>();
+
+		if (messagesToBeReplicate.size() != 0) {
+
+			Collections.sort(messagesToBeReplicate, new TupleComparatorForFrequency());
+
+			// extracts the tuple<message,connection> for the function:
+			// tryMessagesForConnected
+			for (int i = 0; i < messagesToBeReplicate.size(); i++) {
+				MessageTupleForSortByFrequency messageTuples = messagesToBeReplicate.get(i);
+				messages.add(messageTuples.getTuples());
+			}
+
+			return tryMessagesForConnected(messages);
+		} else {
+			return null;
+		}
+
 	}
 
 	/**
