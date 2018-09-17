@@ -109,11 +109,10 @@ public class DistanceBasedSprayAndWaitRouter extends ActiveRouter {
 	 */
 	private Tuple<Message, Connection> tryOtherMessages() {
 
-		List<Tuple<Message, Connection>> messagesToBeReplicate = new ArrayList<Tuple<Message, Connection>>();
+		List<MessageTupleForSortByDistance> messagesToBeReplicate = new ArrayList<MessageTupleForSortByDistance>();
 
 		/* create a list of SAWMessages that have copies left to distribute */
-		@SuppressWarnings(value = "unchecked")
-		List<Message> msgCollection = sortByQueueMode(getMessagesWithCopiesLeft());
+		List<Message> msgCollection = getMessagesWithCopiesLeft();
 
 		for (Connection con : getConnections()) {
 			DTNHost other = con.getOtherNode(getHost());
@@ -135,16 +134,29 @@ public class DistanceBasedSprayAndWaitRouter extends ActiveRouter {
 
 				if (distanceBetweenYouAndDestination < distanceBetweenMeAndDestination) {
 
-					Tuple<Message, Connection> messageTuples = new Tuple<Message, Connection>(m, con);
-
+					MessageTupleForSortByDistance messageTuples = new MessageTupleForSortByDistance();
+					messageTuples.setTuples(new Tuple<Message, Connection>(m, con));
+					messageTuples.setDistance(distanceBetweenYouAndDestination);
 					messagesToBeReplicate.add(messageTuples);
 				}
 			}
 
 		}
 
+		List<Tuple<Message, Connection>> messages = new ArrayList<Tuple<Message, Connection>>();
+
 		if (messagesToBeReplicate.size() != 0) {
-			return tryMessagesForConnected(messagesToBeReplicate);
+
+			Collections.sort(messagesToBeReplicate, new TupleComparatorForDistance());
+
+			// extracts the tuple<message,connection> for the function:
+			// tryMessagesForConnected
+			for (int i = 0; i < messagesToBeReplicate.size(); i++) {
+				MessageTupleForSortByDistance messageTuples = messagesToBeReplicate.get(i);
+				messages.add(messageTuples.getTuples());
+			}
+
+			return tryMessagesForConnected(messages);
 		} else {
 			return null;
 		}
