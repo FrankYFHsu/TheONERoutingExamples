@@ -15,6 +15,7 @@ import core.DTNHost;
 import core.Message;
 import core.Settings;
 import core.SimClock;
+import util.Tuple;
 
 public class FrequencySprayAndWaitRouter extends ActiveRouter {
 	/** identifier for the initial number of copies setting ({@value}) */
@@ -174,6 +175,29 @@ public class FrequencySprayAndWaitRouter extends ActiveRouter {
 	@Override
 	public FrequencySprayAndWaitRouter replicate() {
 		return new FrequencySprayAndWaitRouter(this);
+	}
+
+	private class MessageTupleForSortByFrequency {
+
+		private Tuple<Message, Connection> tuples;
+		private double frequency;
+
+		public Tuple<Message, Connection> getTuples() {
+			return tuples;
+		}
+
+		public void setTuples(Tuple<Message, Connection> tuples) {
+			this.tuples = tuples;
+		}
+
+		public double getFrequency() {
+			return frequency;
+		}
+
+		public void setFrequency(double distance) {
+			this.frequency = distance;
+		}
+
 	}
 
 	/**
