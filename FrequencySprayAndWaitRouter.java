@@ -14,6 +14,7 @@ import core.Connection;
 import core.DTNHost;
 import core.Message;
 import core.Settings;
+import core.SimClock;
 
 public class FrequencySprayAndWaitRouter extends ActiveRouter {
 	/** identifier for the initial number of copies setting ({@value}) */
@@ -87,6 +88,17 @@ public class FrequencySprayAndWaitRouter extends ActiveRouter {
 		msg.addProperty(MSG_COUNT_PROPERTY, new Integer(initialNrofCopies));
 		addToMessages(msg, true);
 		return true;
+	}
+
+	@Override
+	public void changedConnection(Connection con) {
+		super.changedConnection(con);
+
+		if (con.isUp()) {
+			DTNHost otherHost = con.getOtherNode(this.getHost());
+			frequencyRecord.addOneRecord(otherHost.getAddress(), SimClock.getTime());
+		}
+
 	}
 
 	@Override
