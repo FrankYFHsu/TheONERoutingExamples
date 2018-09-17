@@ -5,12 +5,14 @@
 package routing;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import core.Connection;
 import core.DTNHost;
 import core.Message;
 import core.Settings;
+import util.Tuple;
 
 /**
  * 
@@ -94,14 +96,45 @@ public class DistanceBasedSprayAndWaitRouter extends ActiveRouter {
 			return;
 		}
 
+		tryOtherMessages();
+
+	}
+
+	/**
+	 * Tries to send all other messages to all connected hosts ordered by their
+	 * distance with the destination
+	 * 
+	 * @return The return value of {@link #tryMessagesForConnected(List)}
+	 */
+	private Tuple<Message, Connection> tryOtherMessages() {
+
+		List<Tuple<Message, Connection>> messagesToBeReplicate = new ArrayList<Tuple<Message, Connection>>();
+
 		/* create a list of SAWMessages that have copies left to distribute */
 		@SuppressWarnings(value = "unchecked")
-		List<Message> copiesLeft = sortByQueueMode(getMessagesWithCopiesLeft());
+		List<Message> msgCollection = sortByQueueMode(getMessagesWithCopiesLeft());
 
-		if (copiesLeft.size() > 0) {
-			/* try to send those messages */
-			this.tryMessagesToConnections(copiesLeft, getConnections());
+		for (Connection con : getConnections()) {
+			DTNHost other = con.getOtherNode(getHost());
+			DistanceBasedSprayAndWaitRouter othRouter = (DistanceBasedSprayAndWaitRouter) other.getRouter();
+
+			for (Message m : msgCollection) {
+				if (othRouter.hasMessage(m.getId())) {
+					continue; // skip messages that the other one has
+				}
+				Tuple<Message, Connection> messageTuples = new Tuple<Message, Connection>(m, con);
+
+				messagesToBeReplicate.add(messageTuples);
+			}
+
 		}
+
+		if (messagesToBeReplicate.size() != 0) {
+			return tryMessagesForConnected(messagesToBeReplicate);
+		} else {
+			return null;
+		}
+
 	}
 
 	/**
