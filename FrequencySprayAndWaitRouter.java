@@ -6,6 +6,8 @@
 package routing;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 import core.Connection;
@@ -152,5 +154,71 @@ public class FrequencySprayAndWaitRouter extends ActiveRouter {
 	@Override
 	public FrequencySprayAndWaitRouter replicate() {
 		return new FrequencySprayAndWaitRouter(this);
+	}
+
+	/**
+	 * The class to record contacts with other nodes.
+	 *
+	 */
+	private class FrequencyRecord {
+
+		private HashMap<Integer, LinkedList<Double>> contactTimeInformationTable;
+		private double timeWindow;
+
+		public FrequencyRecord(double timeWindow) {
+			contactTimeInformationTable = new HashMap<Integer, LinkedList<Double>>();
+			this.timeWindow = timeWindow;
+		}
+
+		public boolean addOneRecord(int hostAddress, double occurTime) {
+
+			boolean result;
+			LinkedList<Double> contactTimeSequence;
+			if (contactTimeInformationTable.containsKey(hostAddress)) {
+				contactTimeSequence = contactTimeInformationTable.get(hostAddress);
+
+			} else {
+				contactTimeSequence = new LinkedList<Double>();
+
+			}
+
+			result = contactTimeSequence.add(occurTime);
+			if (result) {
+				contactTimeSequence = checkVaildRecord(contactTimeSequence, occurTime);
+				contactTimeInformationTable.put(hostAddress, contactTimeSequence);
+			} else {
+				System.err.println("false in addOneRecord");// May not do this
+			}
+
+			return result;
+
+		}
+
+		private LinkedList<Double> checkVaildRecord(LinkedList<Double> contactTimeSequence, double currentTime) {
+
+			while (contactTimeSequence.peek() != null && (currentTime - contactTimeSequence.peek() > timeWindow)) {
+				contactTimeSequence.poll();
+			}
+
+			return contactTimeSequence;
+
+		}
+
+		public double getFrequency(int hostAddress, double currentTime) {
+
+			LinkedList<Double> contactTimeSequence;
+			if (contactTimeInformationTable.containsKey(hostAddress)) {
+				contactTimeSequence = contactTimeInformationTable.get(hostAddress);
+				contactTimeSequence = checkVaildRecord(contactTimeSequence, currentTime);
+
+				return (contactTimeSequence.size()) / timeWindow;
+
+			} else {
+				return 0.0;
+
+			}
+
+		}
+
 	}
 }
