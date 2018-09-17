@@ -5,6 +5,7 @@
  */
 package routing;
 
+import java.util.Comparator;
 import java.util.HashMap;
 
 import core.Connection;
@@ -126,6 +127,34 @@ public class FRESHRouter extends ActiveRouter {
 
 		public void setEncounterAge(double encounterAge) {
 			this.encounterAge = encounterAge;
+		}
+
+	}
+
+	/**
+	 * Comparator for MessageTupleForSortByEncounterAge that orders the tuples by
+	 * their encounter age with the destination. The
+	 * MessageTupleForSortByEncounterAge with the smaller encounter age will come
+	 * first.
+	 */
+	private class TupleComparatorForEncounterAge implements Comparator<MessageTupleForSortByEncounterAge> {
+
+		@Override
+		public int compare(MessageTupleForSortByEncounterAge o1, MessageTupleForSortByEncounterAge o2) {
+
+			double p1 = o1.getEncounterAge();
+			double p2 = o2.getEncounterAge();
+
+			// low encounter age should come first
+			if (p1 == p2) {
+				/* equal age -> let queue mode decide */
+				return compareByQueueMode(o1.getTuples().getKey(), o2.getTuples().getKey());
+			} else if (p1 > p2) {
+				return 1; // o2 first, then o1
+			} else {
+				return -1;// o1 first, then o2
+			}
+
 		}
 
 	}
