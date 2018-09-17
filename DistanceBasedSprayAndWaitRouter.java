@@ -6,6 +6,7 @@ package routing;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import core.Connection;
@@ -228,6 +229,32 @@ public class DistanceBasedSprayAndWaitRouter extends ActiveRouter {
 
 		public void setDistance(double distance) {
 			this.distance = distance;
+		}
+
+	}
+
+	/**
+	 * Comparator for MessageTupleForSortByDistance that orders the tuples by their
+	 * distance to the destination.
+	 */
+	private class TupleComparatorForDistance implements Comparator<MessageTupleForSortByDistance> {
+
+		@Override
+		public int compare(MessageTupleForSortByDistance o1, MessageTupleForSortByDistance o2) {
+
+			double p1 = o1.getDistance();
+			double p2 = o2.getDistance();
+
+			// shorter distance should come first
+			if (p1 == p2) {
+				/* equal distance -> let queue mode decide */
+				return compareByQueueMode(o1.getTuples().getKey(), o2.getTuples().getKey());
+			} else if (p1 > p2) {
+				return 1;
+			} else {
+				return -1;
+			}
+
 		}
 
 	}
