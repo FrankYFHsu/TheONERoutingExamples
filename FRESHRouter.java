@@ -5,8 +5,12 @@
  */
 package routing;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import core.Connection;
 import core.DTNHost;
@@ -95,7 +99,69 @@ public class FRESHRouter extends ActiveRouter {
 			return; // started a transfer, don't try others (yet)
 		}
 
-		// TODO tryOtherMessages();
+		tryOtherMessages();
+	}
+	
+	/**
+	 * Try to send all other messages to all connected hosts sorted by their
+	 * encounter age with the destination in ascending order
+	 * 
+	 * @return The return value of {@link #tryMessagesForConnected(List)}
+	 */
+	private Tuple<Message, Connection> tryOtherMessages() {
+
+		List<MessageTupleForSortByEncounterAge> messagesToBeReplicate = new ArrayList<MessageTupleForSortByEncounterAge>();
+
+		/* Messages in the buffer */
+		List<Message> msgCollection = getMessageCollection().stream().collect(Collectors.toList());
+
+		for (Connection con : getConnections()) {
+			DTNHost other = con.getOtherNode(getHost());
+			FRESHRouter othRouter = (FRESHRouter) other.getRouter();
+
+			if (othRouter.isTransferring()) {
+				continue; // skip hosts that are transferring
+			}
+
+			for (Message m : msgCollection) {
+				if (othRouter.hasMessage(m.getId())) {
+					continue; // skip messages that the other one has
+				}
+
+				DTNHost destiantion = m.getTo();
+
+				double encounterAgeOfThisNode = this.getEncounterAge(destiantion.getAddress());
+				double encounterAgeOfOtherNode = othRouter.getEncounterAge(destiantion.getAddress());
+
+				if (encounterAgeOfThisNode > encounterAgeOfOtherNode) {
+
+					MessageTupleForSortByEncounterAge messageTuples = new MessageTupleForSortByEncounterAge();
+					messageTuples.setTuples(new Tuple<Message, Connection>(m, con));
+					messageTuples.setEncounterAge(encounterAgeOfOtherNode);
+					messagesToBeReplicate.add(messageTuples);
+				}
+			}
+
+		}
+
+		List<Tuple<Message, Connection>> messages = new ArrayList<Tuple<Message, Connection>>();
+
+		if (messagesToBeReplicate.size() != 0) {
+
+			Collections.sort(messagesToBeReplicate, new TupleComparatorForEncounterAge());
+
+			// extracts the tuple<message,connection> for the function:
+			// tryMessagesForConnected
+			for (int i = 0; i < messagesToBeReplicate.size(); i++) {
+				MessageTupleForSortByEncounterAge messageTuples = messagesToBeReplicate.get(i);
+				messages.add(messageTuples.getTuples());
+			}
+
+			return tryMessagesForConnected(messages);
+		} else {
+			return null;
+		}
+
 	}
 
 	@Override
