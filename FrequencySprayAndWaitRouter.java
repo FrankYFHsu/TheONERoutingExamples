@@ -20,6 +20,8 @@ public class FrequencySprayAndWaitRouter extends ActiveRouter {
 	public static final String NROF_COPIES = "nrofCopies";
 	/** identifier for the binary-mode setting ({@value}) */
 	public static final String BINARY_MODE = "binaryMode";
+	/** identifier for the time window size ({@value} ) */
+	public static final String TIME_WINDOW = "timeWindow";
 	/** SprayAndWait router's settings name space ({@value}) */
 	public static final String SPRAYANDWAIT_NS = "FrequencySprayAndWaitRouter";
 	/** Message property key */
@@ -27,6 +29,8 @@ public class FrequencySprayAndWaitRouter extends ActiveRouter {
 
 	protected int initialNrofCopies;
 	protected boolean isBinary;
+	private double timeWindow;
+	private FrequencyRecord frequencyRecord;
 
 	public FrequencySprayAndWaitRouter(Settings s) {
 		super(s);
@@ -34,6 +38,7 @@ public class FrequencySprayAndWaitRouter extends ActiveRouter {
 
 		initialNrofCopies = snwSettings.getInt(NROF_COPIES);
 		isBinary = snwSettings.getBoolean(BINARY_MODE);
+		timeWindow = snwSettings.getDouble(TIME_WINDOW);
 	}
 
 	/**
@@ -45,6 +50,9 @@ public class FrequencySprayAndWaitRouter extends ActiveRouter {
 		super(r);
 		this.initialNrofCopies = r.initialNrofCopies;
 		this.isBinary = r.isBinary;
+		this.timeWindow = r.timeWindow;
+
+		frequencyRecord = new FrequencyRecord(timeWindow);
 	}
 
 	@Override
