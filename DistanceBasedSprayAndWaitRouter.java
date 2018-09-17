@@ -1,5 +1,6 @@
 /* 
- * Copyright 2010 Aalto University, ComNet
+ * Copyright 2018 Network Computing Laboratory, Department of Communication Engineering, 
+ * National Central University.
  * Released under GPLv3. See LICENSE.txt for details. 
  */
 package routing;
