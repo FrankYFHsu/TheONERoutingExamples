@@ -6,6 +6,7 @@
 package routing;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -196,6 +197,32 @@ public class FrequencySprayAndWaitRouter extends ActiveRouter {
 
 		public void setFrequency(double distance) {
 			this.frequency = distance;
+		}
+
+	}
+
+	/**
+	 * Comparator for MessageTupleForSortByFrequency that sorts the tuples by their
+	 * contact frequency during past (TimeWindow) time to the destination.
+	 */
+	private class TupleComparatorForFrequency implements Comparator<MessageTupleForSortByFrequency> {
+
+		@Override
+		public int compare(MessageTupleForSortByFrequency o1, MessageTupleForSortByFrequency o2) {
+
+			double p1 = o1.getFrequency();
+			double p2 = o2.getFrequency();
+
+			// higher frequency should come first
+			if (p1 == p2) {
+				/* equal frequency -> let queue mode decide */
+				return compareByQueueMode(o1.getTuples().getKey(), o2.getTuples().getKey());
+			} else if (p1 < p2) {
+				return 1;
+			} else {
+				return -1;
+			}
+
 		}
 
 	}
