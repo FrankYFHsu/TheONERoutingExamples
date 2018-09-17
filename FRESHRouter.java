@@ -60,6 +60,26 @@ public class FRESHRouter extends ActiveRouter {
 
 	}
 
+	/**
+	 * Get encounter age which is the time elapsed since the most recent encounter
+	 * of this node and other node.
+	 */
+	public double getEncounterAge(int otherNodeID) {
+
+		if (this.getHost().getAddress() == otherNodeID) {
+			return 0.0;
+		}
+
+		if (this.lastEncounterTime.containsKey(otherNodeID)) {
+			return SimClock.getTime() - lastEncounterTime.get(otherNodeID);
+		} else {
+			// Never encountered that other node.
+			// In this case, the paper lets the encounter age be infinite, but let it be the
+			// current simulation time has the same result.
+			return SimClock.getTime();
+		}
+	}
+
 	@Override
 	public void update() {
 		super.update();
