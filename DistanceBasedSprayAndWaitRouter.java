@@ -118,13 +118,26 @@ public class DistanceBasedSprayAndWaitRouter extends ActiveRouter {
 			DTNHost other = con.getOtherNode(getHost());
 			DistanceBasedSprayAndWaitRouter othRouter = (DistanceBasedSprayAndWaitRouter) other.getRouter();
 
+			if (othRouter.isTransferring()) {
+				continue; // skip hosts that are transferring
+			}
+
 			for (Message m : msgCollection) {
 				if (othRouter.hasMessage(m.getId())) {
 					continue; // skip messages that the other one has
 				}
-				Tuple<Message, Connection> messageTuples = new Tuple<Message, Connection>(m, con);
 
-				messagesToBeReplicate.add(messageTuples);
+				DTNHost destiantion = m.getTo();
+
+				double distanceBetweenMeAndDestination = getDistance(this.getHost(), destiantion);
+				double distanceBetweenYouAndDestination = getDistance(othRouter.getHost(), destiantion);
+
+				if (distanceBetweenYouAndDestination < distanceBetweenMeAndDestination) {
+
+					Tuple<Message, Connection> messageTuples = new Tuple<Message, Connection>(m, con);
+
+					messagesToBeReplicate.add(messageTuples);
+				}
 			}
 
 		}
@@ -134,6 +147,12 @@ public class DistanceBasedSprayAndWaitRouter extends ActiveRouter {
 		} else {
 			return null;
 		}
+
+	}
+
+	private double getDistance(DTNHost host1, DTNHost host2) {
+
+		return host1.getLocation().distance(host2.getLocation());
 
 	}
 
