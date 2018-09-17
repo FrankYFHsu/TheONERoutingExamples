@@ -208,4 +208,27 @@ public class DistanceBasedSprayAndWaitRouter extends ActiveRouter {
 	public DistanceBasedSprayAndWaitRouter replicate() {
 		return new DistanceBasedSprayAndWaitRouter(this);
 	}
+	
+	private class MessageTupleForSortByDistance {
+
+		private Tuple<Message, Connection> tuples;
+		private double distance;
+
+		public Tuple<Message, Connection> getTuples() {
+			return tuples;
+		}
+
+		public void setTuples(Tuple<Message, Connection> tuples) {
+			this.tuples = tuples;
+		}
+
+		public double getDistance() {
+			return distance;
+		}
+
+		public void setDistance(double distance) {
+			this.distance = distance;
+		}
+
+	}
 }
