@@ -7,7 +7,10 @@ package routing;
 
 import java.util.HashMap;
 
+import core.Connection;
+import core.DTNHost;
 import core.Settings;
+import core.SimClock;
 
 /**
  * FRESH: FResher Encounter SearcH Routing scheme
@@ -39,6 +42,22 @@ public class FRESHRouter extends ActiveRouter {
 	protected FRESHRouter(FRESHRouter r) {
 		super(r);
 		lastEncounterTime = new HashMap<Integer, Double>();
+	}
+
+	@Override
+	public void changedConnection(Connection con) {
+		super.changedConnection(con);
+
+		if (con.isUp()) {
+			// Nothing to do.
+		} else {
+			// The encounter age is calculated from the time that two nodes' connection is
+			// down in this example.
+			double time = SimClock.getTime();
+			DTNHost otherHost = con.getOtherNode(this.getHost());
+			lastEncounterTime.put(otherHost.getAddress(), time);
+		}
+
 	}
 
 	@Override
